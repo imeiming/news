@@ -2059,11 +2059,7 @@ def render_html_content(
     <body>
         <div class="container">
             <div class="header">
-                <div class="save-buttons">
-                    <button class="save-btn" onclick="saveAsImage()">保存为图片</button>
-                    <button class="save-btn" onclick="saveAsMultipleImages()">分段保存</button>
-                </div>
-                <div class="header-title">热点新闻分析</div>
+                <div class="header-title">热点新闻</div>
                 <div class="header-info">
                     <div class="info-item">
                         <span class="info-label">报告类型</span>
