@@ -1037,15 +1037,15 @@ frequency_words.txt 文件增加了一个【必须词】功能，使用 + 号
    4. `EMAIL_PASSWORD` 填写授权码，而非 QQ 密码
 
    #### Gmail：
-   5. 开启两步验证
-   6. 生成应用专用密码
-   7. `EMAIL_PASSWORD` 填写应用专用密码
+   1. 开启两步验证
+   2. 生成应用专用密码
+   3. `EMAIL_PASSWORD` 填写应用专用密码
 
    #### 163/126邮箱：
-   8. 登录网页版 → 设置 → POP3/SMTP/IMAP
-   9. 开启 SMTP 服务
-   10. 设置客户端授权码
-   11. `EMAIL_PASSWORD` 填写授权码
+   1. 登录网页版 → 设置 → POP3/SMTP/IMAP
+   2. 开启 SMTP 服务
+   3. 设置客户端授权码
+   4. `EMAIL_PASSWORD` 填写授权码
    <br>
 
    **高级配置**：
@@ -1268,41 +1268,41 @@ frequency_words.txt 文件增加了一个【必须词】功能，使用 + 号
 
    ### 步骤 2：启用 Incoming Webhooks
 
-   4. **导航到 Incoming Webhooks**：
+   1. **导航到 Incoming Webhooks**：
       - 在左侧菜单中找到并点击 **"Incoming Webhooks"**
 
-   5. **启用功能**：
+   2. **启用功能**：
       - 找到 **"Activate Incoming Webhooks"** 开关
       - 将开关从 `OFF` 切换到 `ON`
       - 页面会自动刷新显示新的配置选项
 
    ### 步骤 3：生成 Webhook URL
 
-   6. **添加新的 Webhook**：
+   1. **添加新的 Webhook**：
       - 滚动到页面底部
       - 点击 **"Add New Webhook to Workspace"** 按钮
 
-   7. **选择目标频道**：
+   2. **选择目标频道**：
       - 系统会弹出授权页面
       - 从下拉列表中选择要接收消息的频道（如 `#热点新闻`）
       - ⚠️ 如果要选择私有频道，必须先加入该频道
 
-   8. **授权应用**：
+   3. **授权应用**：
       - 点击 **"Allow"** 按钮完成授权
       - 系统会自动跳转回配置页面
 
    ### 步骤 4：复制并保存 Webhook URL
 
-   9. **查看生成的 URL**：
+   1. **查看生成的 URL**：
       - 在 "Webhook URLs for Your Workspace" 区域
       - 会看到刚刚生成的 Webhook URL
       - 格式如：`https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX`
 
-   10. **复制 URL**：
+   2. **复制 URL**：
       - 点击 URL 右侧的 **"Copy"** 按钮
       - 或手动选中 URL 并复制
 
-   11. **配置到 TrendRadar**：
+   3. **配置到 TrendRadar**：
       - **GitHub Actions**：将 URL 添加到 GitHub Secrets 中的 `SLACK_WEBHOOK_URL`
       - **本地测试**：将 URL 填入 `config/config.yaml` 的 `slack_webhook_url` 字段
       - **Docker 部署**：将 URL 添加到 `docker/.env` 文件的 `SLACK_WEBHOOK_URL` 变量
@@ -1334,7 +1334,7 @@ frequency_words.txt 文件增加了一个【必须词】功能，使用 + 号
 
    </details>
 
-1. **手动测试新闻推送**：
+3. **手动测试新闻推送**：
 
    > 💡 **完成第1-2步后，请立即测试！** 测试成功后再根据需要调整配置（第4步）。
    >
@@ -1356,7 +1356,7 @@ frequency_words.txt 文件增加了一个【必须词】功能，使用 + 号
    3. 点击右侧的 **"Run workflow"** 按钮运行
    4. 等待 1 分钟左右，消息会推送到你配置的平台
 
-2. **配置说明（可选）**：
+4. **配置说明（可选）**：
 
     > 💡 默认配置已可正常使用，如需个性化调整，可参考以下选项
 
@@ -1366,7 +1366,7 @@ frequency_words.txt 文件增加了一个【必须词】功能，使用 + 号
 
     **注意**：建议只调整文档中明确说明的配置项,其他选项主要供作者开发时测试使用
 
-3. **🎉 部署成功！分享你的使用体验**
+5. **🎉 部署成功！分享你的使用体验**
 
    恭喜你完成了 TrendRadar 的配置！现在你可以开始追踪热点资讯了。
 
@@ -1380,7 +1380,7 @@ frequency_words.txt 文件增加了一个【必须词】功能，使用 + 号
 
    详细的交流方式，请查看 → [问题答疑与交流](#问题答疑与交流)
 
-4. **想要更智能的分析？试试 AI 增强功能**（可选）
+6. **想要更智能的分析？试试 AI 增强功能**（可选）
 
    基础配置已经能满足日常使用，但如果你想要：
 
