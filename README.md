@@ -810,9 +810,11 @@ frequency_words.txt 文件增加了一个【必须词】功能，使用 + 号
    - **Secret（值）**：你的飞书机器人 Webhook 地址（该链接开头类似 https://www.feishu.cn/flow/api/trigger-webhook/********）
    <br>
 
-   有两个方案，**方案一**配置简单，**方案二**配置复杂(但是稳定推送)
+   有三个方案，**方案一**配置简单，**方案二**配置复杂(但是稳定推送)，**方案三** 结合 Markpost 服务，支持群机器人，兼容性最好。
 
    其中方案一，由 **ziventian**发现并提供建议，在这里感谢他，默认是个人推送，也可以配置群组推送操作[#97](https://github.com/sansan0/TrendRadar/issues/97) ，
+
+   方案三，由 **jukanntenn** 提供，可有效解决飞书群机器人格式兼容性问题。
 
    **方案一：**
 
@@ -887,6 +889,18 @@ frequency_words.txt 文件增加了一个【必须词】功能，使用 + 号
    ![飞书机器人配置示例](_image/image.png)
 
    10. 配置完成后，将第 5 步复制的 Webhook 地址配置到 GitHub Secrets 中的 `FEISHU_WEBHOOK_URL`
+  
+   <br>
+
+   **方案三：**
+
+   1. 打开 PC 端飞书应用（注意是 PC 端，手机飞书不支持添加自定义群机器人），点击左上角的 + 按钮，选择“创建群组”，随便取一个群名称，然后点击创建，创建一个飞书群组
+
+   2. 在消息区点击刚刚创建的群组，点击右上角的三个点，点击“设置”，点击“群机器人”，点击“添加机器人”，点击“自定义机器人”，填写必要信息后点击添加，记录下“Webhook 地址”
+  
+   3. 在 NAS 或者云服务器上部署一个 [Markpost](https://github.com/jukanntenn/markpost) 服务，如果不想自己部署，也可以直接使用 [在线服务](https://markpost.cc/)，记录下 “Post Key“
+
+   4. 配置项 `FEISHU_WEBHOOK_URL` 的值配置为第 2 步中的 “Webhook 地址”；配置项 `MARKPOST_URL` 的值配置为服务地址 + 第 3 步中的 “Post Key”，例如使用了在线服务，Post Key 是 abcdefg，那么值就是 `https://markpost.cc/abcdefg`，如果是自部署的服务，将 `https://markpost.cc` 换成自己的服务地址（保证可公网访问）
 
    </details>
 
@@ -1023,15 +1037,15 @@ frequency_words.txt 文件增加了一个【必须词】功能，使用 + 号
    4. `EMAIL_PASSWORD` 填写授权码，而非 QQ 密码
 
    #### Gmail：
-   1. 开启两步验证
-   2. 生成应用专用密码
-   3. `EMAIL_PASSWORD` 填写应用专用密码
+   5. 开启两步验证
+   6. 生成应用专用密码
+   7. `EMAIL_PASSWORD` 填写应用专用密码
 
    #### 163/126邮箱：
-   1. 登录网页版 → 设置 → POP3/SMTP/IMAP
-   2. 开启 SMTP 服务
-   3. 设置客户端授权码
-   4. `EMAIL_PASSWORD` 填写授权码
+   8. 登录网页版 → 设置 → POP3/SMTP/IMAP
+   9. 开启 SMTP 服务
+   10. 设置客户端授权码
+   11. `EMAIL_PASSWORD` 填写授权码
    <br>
 
    **高级配置**：
@@ -1254,41 +1268,41 @@ frequency_words.txt 文件增加了一个【必须词】功能，使用 + 号
 
    ### 步骤 2：启用 Incoming Webhooks
 
-   1. **导航到 Incoming Webhooks**：
+   4. **导航到 Incoming Webhooks**：
       - 在左侧菜单中找到并点击 **"Incoming Webhooks"**
 
-   2. **启用功能**：
+   5. **启用功能**：
       - 找到 **"Activate Incoming Webhooks"** 开关
       - 将开关从 `OFF` 切换到 `ON`
       - 页面会自动刷新显示新的配置选项
 
    ### 步骤 3：生成 Webhook URL
 
-   1. **添加新的 Webhook**：
+   6. **添加新的 Webhook**：
       - 滚动到页面底部
       - 点击 **"Add New Webhook to Workspace"** 按钮
 
-   2. **选择目标频道**：
+   7. **选择目标频道**：
       - 系统会弹出授权页面
       - 从下拉列表中选择要接收消息的频道（如 `#热点新闻`）
       - ⚠️ 如果要选择私有频道，必须先加入该频道
 
-   3. **授权应用**：
+   8. **授权应用**：
       - 点击 **"Allow"** 按钮完成授权
       - 系统会自动跳转回配置页面
 
    ### 步骤 4：复制并保存 Webhook URL
 
-   1. **查看生成的 URL**：
+   9. **查看生成的 URL**：
       - 在 "Webhook URLs for Your Workspace" 区域
       - 会看到刚刚生成的 Webhook URL
       - 格式如：`https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX`
 
-   2. **复制 URL**：
+   10. **复制 URL**：
       - 点击 URL 右侧的 **"Copy"** 按钮
       - 或手动选中 URL 并复制
 
-   3. **配置到 TrendRadar**：
+   11. **配置到 TrendRadar**：
       - **GitHub Actions**：将 URL 添加到 GitHub Secrets 中的 `SLACK_WEBHOOK_URL`
       - **本地测试**：将 URL 填入 `config/config.yaml` 的 `slack_webhook_url` 字段
       - **Docker 部署**：将 URL 添加到 `docker/.env` 文件的 `SLACK_WEBHOOK_URL` 变量
@@ -1320,7 +1334,7 @@ frequency_words.txt 文件增加了一个【必须词】功能，使用 + 号
 
    </details>
 
-3. **手动测试新闻推送**：
+1. **手动测试新闻推送**：
 
    > 💡 **完成第1-2步后，请立即测试！** 测试成功后再根据需要调整配置（第4步）。
    >
@@ -1342,7 +1356,7 @@ frequency_words.txt 文件增加了一个【必须词】功能，使用 + 号
    3. 点击右侧的 **"Run workflow"** 按钮运行
    4. 等待 1 分钟左右，消息会推送到你配置的平台
 
-4. **配置说明（可选）**：
+2. **配置说明（可选）**：
 
     > 💡 默认配置已可正常使用，如需个性化调整，可参考以下选项
 
@@ -1352,7 +1366,7 @@ frequency_words.txt 文件增加了一个【必须词】功能，使用 + 号
 
     **注意**：建议只调整文档中明确说明的配置项,其他选项主要供作者开发时测试使用
 
-5. **🎉 部署成功！分享你的使用体验**
+3. **🎉 部署成功！分享你的使用体验**
 
    恭喜你完成了 TrendRadar 的配置！现在你可以开始追踪热点资讯了。
 
@@ -1366,7 +1380,7 @@ frequency_words.txt 文件增加了一个【必须词】功能，使用 + 号
 
    详细的交流方式，请查看 → [问题答疑与交流](#问题答疑与交流)
 
-6. **想要更智能的分析？试试 AI 增强功能**（可选）
+4. **想要更智能的分析？试试 AI 增强功能**（可选）
 
    基础配置已经能满足日常使用，但如果你想要：
 
