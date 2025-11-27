@@ -202,6 +202,11 @@ def load_config():
         "bark_url", ""
     )
 
+    # markpost配置
+    config["MARKPOST_URL"] = os.environ.get("MARKPOST_URL", "").strip() or webhooks.get(
+        "markpost_url", ""
+    )
+
     # 输出配置来源信息
     notification_sources = []
     if config["FEISHU_WEBHOOK_URL"]:
@@ -1663,6 +1668,27 @@ def format_title_for_platform(
 
         return formatted_title
 
+    elif platform == "markdown":
+        if link_url:
+            formatted_title = f"[{cleaned_title}]({link_url})"
+        else:
+            formatted_title = cleaned_title
+
+        title_prefix = "🆕 " if title_data.get("is_new") else ""
+
+        if show_source:
+            result = f"[{title_data['source_name']}] {title_prefix}{formatted_title}"
+        else:
+            result = f"{title_prefix}{formatted_title}"
+
+        if rank_display:
+            result += f" {rank_display}"
+        if title_data["time_display"]:
+            result += f" - {title_data['time_display']}"
+        if title_data["count"] > 1:
+            result += f" ({title_data['count']}次)"
+
+        return result
     else:
         return cleaned_title
 
@@ -2716,6 +2742,89 @@ def render_html_content(
     return html
 
 
+def render_markdown_content(
+    report_data: Dict, update_info: Optional[Dict] = None, mode: str = "daily"
+) -> str:
+    """渲染Markdown内容"""
+    markdown = ""
+
+    if report_data["stats"]:
+        markdown += "📊 **热点词汇统计**\n\n"
+
+    total_count = len(report_data["stats"])
+
+    for i, stat in enumerate(report_data["stats"]):
+        word = stat["word"]
+        count = stat["count"]
+
+        sequence_display = f"[{i + 1}/{total_count}]"
+
+        if count >= 10:
+            markdown += f"🔥 {sequence_display} **{word}** : **{count}** 条\n\n"
+        elif count >= 5:
+            markdown += f"📈 {sequence_display} **{word}** : **{count}** 条\n\n"
+        else:
+            markdown += f"📌 {sequence_display} **{word}** : {count} 条\n\n"
+
+        for j, title_data in enumerate(stat["titles"], 1):
+            formatted_title = format_title_for_platform(
+                "markdown", title_data, show_source=True
+            )
+            markdown += f"   {j}. {formatted_title}\n\n"
+
+        if i < len(report_data["stats"]) - 1:
+            markdown += "---\n\n"
+
+    if not markdown:
+        if mode == "incremental":
+            mode_text = "增量模式下暂无新增匹配的热点词汇"
+        elif mode == "current":
+            mode_text = "当前榜单模式下暂无匹配的热点词汇"
+        else:
+            mode_text = "暂无匹配的热点词汇"
+        markdown = f"📭 {mode_text}\n\n"
+
+    if report_data["new_titles"]:
+        if markdown and "暂无匹配" not in markdown:
+            markdown += "---\n\n"
+
+        markdown += (
+            f"🆕 **本次新增热点新闻** (共 {report_data['total_new_count']} 条)\n\n"
+        )
+
+        for source_data in report_data["new_titles"]:
+            markdown += (
+                f"**{source_data['source_name']}** ({len(source_data['titles'])} 条):\n\n"
+            )
+
+            for j, title_data in enumerate(source_data["titles"], 1):
+                title_data_copy = title_data.copy()
+                title_data_copy["is_new"] = False
+                formatted_title = format_title_for_platform(
+                    "markdown", title_data_copy, show_source=False
+                )
+                
+                markdown += f"   {j}. {formatted_title}\n\n"
+
+    if report_data["failed_ids"]:
+        if markdown and "暂无匹配" not in markdown:
+            markdown += "---\n\n"
+
+        markdown += "⚠️ **数据获取失败的平台：**\n\n"
+        for i, id_value in enumerate(report_data["failed_ids"], 1):
+            markdown += f"   • {id_value}\n\n"
+
+    now = get_beijing_time()
+    markdown += (
+        f"_更新时间：{now.strftime('%Y-%m-%d %H:%M:%S')}_\n\n"
+    )
+
+    if update_info:
+        markdown += f"_发现新版本 {update_info['remote_version']}，当前 {update_info['current_version']}_\n\n"
+
+    return markdown
+
+
 def render_feishu_content(
     report_data: Dict, update_info: Optional[Dict] = None, mode: str = "daily"
 ) -> str:
@@ -3363,6 +3472,111 @@ def split_content_into_batches(
     return batches
 
 
+def send_to_markpost(
+    markpost_url: str,
+    report_data: Dict,
+    report_type: str,
+    update_info: Optional[Dict] = None,
+    mode: str = "daily",
+) -> Optional[str]:
+    """发送Markdown报告到markpost平台"""
+    try:
+        # 提取base URL（用于构造最终链接）
+        url_parts = markpost_url.split('/')
+        if len(url_parts) >= 4:
+            base_url = '/'.join(url_parts[:-1])
+        else:
+            base_url = markpost_url.rstrip('/')
+
+        # 生成Markdown内容
+        markdown_content = render_markdown_content(
+            report_data, update_info=update_info, mode=mode
+        )
+
+        # 准备请求数据
+        payload = {
+            "title": report_type,
+            "body": markdown_content
+        }
+
+        response = requests.post(
+            markpost_url,
+            json=payload,
+            timeout=30
+        )
+
+        if response.status_code == 200:
+            result = response.json()
+            if "id" in result:
+                post_id = result["id"]
+                post_link = f"{base_url}/{post_id}"
+                print(f"报告已成功发布到markpost: {post_link}")
+                return post_link
+            else:
+                print(f"markpost响应格式错误: {result}")
+                return None
+        else:
+            print(f"markpost API请求失败，状态码: {response.status_code}")
+            return None
+
+    except Exception as e:
+        print(f"发送到markpost失败: {e}")
+        return None
+
+
+def send_brief_to_feishu(
+    webhook_url: str,
+    brief_content: str,
+    post_link: str,
+    report_type: str,
+    update_info: Optional[Dict] = None,
+    proxy_url: Optional[str] = None,
+) -> bool:
+    """发送简报和markpost链接到飞书（文本模式）"""
+    headers = {"Content-Type": "application/json"}
+    proxies = None
+    if proxy_url:
+        proxies = {"http": proxy_url, "https": proxy_url}
+
+    message_content = f"{brief_content}\n\n[**点击查看完整报告 →**]({post_link})\n\n"
+
+    if update_info:
+        message_content += f"\nTrendRadar 发现新版本 {update_info['remote_version']}，当前 {update_info['current_version']}"
+
+    payload = {
+        "msg_type": "interactive",
+        "card": {
+            "elements": [
+                {
+                    "tag": "markdown",
+                    "content": message_content
+                }
+            ]
+        }
+    }
+
+    try:
+        response = requests.post(
+            webhook_url,
+            data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
+            headers=headers,
+            proxies=proxies,
+            timeout=30
+        )
+
+        result = response.json()
+        if result.get("StatusCode") == 0:
+            print(f"飞书简报发送成功 [{report_type}]")
+            return True
+        else:
+            error_msg = result.get("msg") or result.get("StatusMessage", "未知错误")
+            print(f"飞书简报发送失败 [{report_type}]，错误：{error_msg}")
+            return False
+    except Exception as e:
+        print(f"飞书简报发送出错 [{report_type}]：{e}")
+        return False
+
+
 def send_to_notifications(
     stats: List[Dict],
     failed_ids: Optional[List] = None,
@@ -3398,6 +3612,7 @@ def send_to_notifications(
 
     report_data = prepare_report_data(stats, failed_ids, new_titles, id_to_name, mode)
 
+    markpost_url = CONFIG["MARKPOST_URL"]
     feishu_url = CONFIG["FEISHU_WEBHOOK_URL"]
     dingtalk_url = CONFIG["DINGTALK_WEBHOOK_URL"]
     wework_url = CONFIG["WEWORK_WEBHOOK_URL"]
@@ -3415,11 +3630,29 @@ def send_to_notifications(
 
     update_info_to_send = update_info if CONFIG["SHOW_VERSION_UPDATE"] else None
 
-    # 发送到飞书
-    if feishu_url:
-        results["feishu"] = send_to_feishu(
-            feishu_url, report_data, report_type, update_info_to_send, proxy_url, mode
+    # 检查markpost配置
+    markpost_link = None
+    if markpost_url:
+        markpost_link = send_to_markpost(
+            markpost_url, report_data, report_type, update_info_to_send, mode
         )
+
+    # 发送到飞书（如果markpost成功则发送简报）
+    if feishu_url:
+        if markpost_link:
+            # 生成简报内容
+            total_titles = sum(stat["count"] for stat in stats)
+            brief_content = f"📊 **{report_type}**\n\n统计了 {total_titles} 条新闻，发现 {len(report_data['stats'])} 个热点词汇。"
+            if report_data['total_new_count'] > 0:
+                brief_content += f" 新增 {report_data['total_new_count']} 条相关新闻。"
+            results["feishu"] = send_brief_to_feishu(
+                feishu_url, brief_content, markpost_link, report_type, update_info_to_send, proxy_url
+            )
+        else:
+            # 按原有逻辑发送完整内容
+            results["feishu"] = send_to_feishu(
+                feishu_url, report_data, report_type, update_info_to_send, proxy_url, mode
+            )
 
     # 发送到钉钉
     if dingtalk_url:
