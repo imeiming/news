@@ -28,19 +28,35 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
+          # 获取完整历史以便后续 git pull/rebase 正常工作
           fetch-depth: 0
           clean: true
-          
+
+      - name: Cache pip and venv
+        uses: actions/cache@v4
+        with:
+          # 缓存 pip 的 cache 以及可能的虚拟环境目录，避免每次都重新下载依赖
+          path: |
+            ~/.cache/pip
+            .venv
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: "3.10"
-          
-      - name: Install dependencies
+
+      - name: Create and activate venv, install dependencies
         run: |
+          python -m venv .venv
+          # 使用虚拟环境里的 pip，并指定 cache-dir 指向已缓存的位置
+          . .venv/bin/activate
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          
+          pip install -r requirements.txt --cache-dir ~/.cache/pip
+        shell: bash
+
       - name: Verify required files
         run: |
           echo "🔍 检查必需的配置文件..."
@@ -53,7 +69,8 @@ jobs:
             exit 1
           fi
           echo "✅ 配置文件检查通过"
-          
+        shell: bash
+
       - name: Run crawler
         env:
           FEISHU_WEBHOOK_URL: ${{ secrets.FEISHU_WEBHOOK_URL }}
@@ -73,8 +90,12 @@ jobs:
           BARK_URL: ${{ secrets.BARK_URL }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           GITHUB_ACTIONS: true
-        run: python main.py
-        
+        run: |
+          # 使用之前创建的虚拟环境运行
+          . .venv/bin/activate
+          python main.py
+        shell: bash
+
       - name: Commit and push if changes
         env:
           BRANCH_NAME: ${{ github.event.repository.default_branch }}
