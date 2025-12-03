@@ -54,23 +54,6 @@ notification:
       end: "22:00"    # 推送时间窗口结束（北京时间）
     once_per_day: true  # 每天在时间窗口内只推送一次，如果 false，则窗口内每次执行都推送
     push_record_retention_days: 7  # 推送记录保留天数
-
-  # ⚠️⚠️⚠️ 重要安全警告 / IMPORTANT SECURITY WARNING ⚠️⚠️⚠️
-  #
-  # 🔴 请务必妥善保管好 webhooks，不要公开!!!
-  # 🔴 如果你以 fork 的方式将本项目部署在 GitHub 上，请勿在下面填写任何 webhooks
-  # 🔴 而是将 webhooks 填入 GitHub Secret（Settings → Secrets and variables → Actions）
-  # 🔴 否则：
-  #    - 轻则：手机上收到大量垃圾广告推送
-  #    - 重则：webhook 被滥用造成严重安全隐患（如恶意消息轰炸、钓鱼链接等）
-  #
-  # 🔴 NEVER expose webhooks publicly!!!
-  # 🔴 If deploying via GitHub fork, DO NOT fill webhooks below
-  # 🔴 Instead, add them to GitHub Secrets (Settings → Secrets and variables → Actions)
-  # 🔴 Consequences of exposure:
-  #    - Minor: Spam notifications flooding your devices
-  #    - Severe: Webhook abuse leading to security incidents (malicious messages, phishing links, etc.)
-  #
   webhooks:
     feishu_url: "" # 飞书机器人的 webhook URL
     dingtalk_url: "" # 钉钉机器人的 webhook URL
@@ -89,33 +72,25 @@ notification:
     bark_url: "" # Bark推送URL（格式：https://api.day.app/your_device_key 或自建服务器地址）
     slack_webhook_url: "" # Slack Incoming Webhook URL（格式：https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX）
 
-# 用于让关注度更高的新闻在更前面显示，即用算法重新组合不同平台的热搜排序形成你侧重的热搜，合起来是 1 就行
+# 热点排序权重（优化财经话题优先级）
 weight:
-  rank_weight: 0.6 # 排名权重
-  frequency_weight: 0.3 # 频次权重
-  hotness_weight: 0.1 # 热度权重
+  rank_weight: 0.5           # 降低平台排名权重（聚焦多平台共性热点）
+  frequency_weight: 0.4      # 提高出现频次权重（多平台提及的财经事件更具参考价值）
+  hotness_weight: 0.1        # 保留热度权重（兼顾突发热点）
 
-# name 可以定义任意名称，只具有显示作用，即使项目运行了几天后，忽然改掉 name 也不会影响代码的正常运行
+# 精选财经相关平台（剔除非财经平台，提升爬取效率）
 platforms:
-  - id: "toutiao"
-    name: "今日头条"
-  - id: "baidu"
-    name: "百度热搜"
-  - id: "wallstreetcn-hot"
-    name: "华尔街见闻"
-  - id: "thepaper"
-    name: "澎湃新闻"
-  - id: "bilibili-hot-search"
-    name: "bilibili 热搜"
   - id: "cls-hot"
-    name: "财联社热门"
-  - id: "ifeng"
-    name: "凤凰网"
-  - id: "tieba"
-    name: "贴吧"
-  - id: "weibo"
-    name: "微博"
-  - id: "douyin"
-    name: "抖音"
+    name: "财联社热门"        # 核心金融数据源（A股动态、政策速递）
+  - id: "wallstreetcn-hot"
+    name: "华尔街见闻"        # 国际财经+国内市场（美联储、汇率等）
+  - id: "toutiao"
+    name: "今日头条"          # 财经板块（热点聚合）
   - id: "zhihu"
-    name: "知乎"
+    name: "知乎"              # 专业财经问答、机构分析
+  - id: "baidu"
+    name: "百度热搜"          # 突发财经事件聚合
+  - id: "thepaper"
+    name: "澎湃新闻"          # 政策、产业动态（权威来源）
+  - id: "ifeng"
+    name: "凤凰网"            # 宏观政策、跨境贸易新闻
