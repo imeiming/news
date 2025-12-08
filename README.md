@@ -59,7 +59,7 @@
 
 <div align="center">
 
-**中文** | **[English](README-EN.md)**
+**中文** | **[English](README-EN.md)** | **[日本語](README-JA.md)**
 
 </div>
 
