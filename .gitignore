@@ -1,0 +1,44 @@
+# Python虚拟环境
+venv/
+env/
+*.venv/
+.venv/  # UV默认虚拟环境
+
+# UV包管理器
+uv.lock
+.uv/
+
+# 输出目录&文件
+output/
+index.html
+
+# 本地配置文件
+config/config.yaml
+config/frequency_words.txt
+
+# 日志文件
+*.log
+logs/
+
+# IDE配置
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# 操作系统文件
+.DS_Store
+Thumbs.db
+
+# Docker相关
+.docker/
+
+# 其他临时文件
+*.pyc
+__pycache__/
+
+# 敏感文件
+.env
+*.env
+secrets.txt

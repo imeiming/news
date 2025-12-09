@@ -137,3 +137,22 @@ platforms:
     name: "抖音"
   - id: "zhihu"
     name: "知乎"
+
+# RSS源配置，用于订阅外部RSS源
+# 支持两种配置方式：
+# 1. 嵌套方式（推荐）：
+rss:
+  feeds:
+    # 示例RSS源配置
+    # - url: "https://example.com/tech/rss.xml"
+    #   name: "示例科技博客"
+    # - url: "https://example.com/news/rss.xml"
+    #   name: "示例新闻网站"
+    
+# 2. 直接方式：
+# rss_sources:
+#   # 示例RSS源配置
+#   # - url: "https://example.com/tech/rss.xml"
+#   #   name: "示例科技博客"
+#   # - url: "https://example.com/news/rss.xml"
+#   #   name: "示例新闻网站"

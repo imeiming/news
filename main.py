@@ -255,6 +255,8 @@ def load_config():
             "HOTNESS_WEIGHT": config_data["weight"]["hotness_weight"],
         },
         "PLATFORMS": config_data["platforms"],
+        # RSS配置
+        "RSS": config_data.get("rss", {}),
     }
 
     # 通知渠道配置（环境变量优先）
@@ -983,7 +985,7 @@ def read_all_today_titles(
             filtered_id_to_name = {}
 
             for source_id, title_data in titles_by_id.items():
-                if source_id in current_platform_ids:
+                if source_id in current_platform_ids or source_id.startswith("http"):
                     filtered_titles_by_id[source_id] = title_data
                     if source_id in file_id_to_name:
                         filtered_id_to_name[source_id] = file_id_to_name[source_id]
@@ -1090,11 +1092,12 @@ def detect_latest_new_titles(current_platform_ids: Optional[List[str]] = None) -
     latest_file = files[-1]
     latest_titles, _ = parse_file_titles(latest_file)
 
-    # 如果指定了当前平台列表，过滤最新文件数据
+    # 如果指定了当前平台列表，过滤最新文件数据，但保留RSS源
     if current_platform_ids is not None:
         filtered_latest_titles = {}
         for source_id, title_data in latest_titles.items():
-            if source_id in current_platform_ids:
+            # 保留配置的平台和RSS源（RSS源的ID是URL，以http开头）
+            if source_id in current_platform_ids or source_id.startswith("http"):
                 filtered_latest_titles[source_id] = title_data
         latest_titles = filtered_latest_titles
 
@@ -1107,7 +1110,7 @@ def detect_latest_new_titles(current_platform_ids: Optional[List[str]] = None) -
         if current_platform_ids is not None:
             filtered_historical_data = {}
             for source_id, title_data in historical_data.items():
-                if source_id in current_platform_ids:
+                if source_id in current_platform_ids or source_id.startswith("http"):
                     filtered_historical_data[source_id] = title_data
             historical_data = filtered_historical_data
 
@@ -5268,9 +5271,30 @@ class NewsAnalyzer:
         print(f"开始爬取数据，请求间隔 {self.request_interval} 毫秒")
         ensure_directory_exists("output")
 
+        # 爬取原有平台数据
         results, id_to_name, failed_ids = self.data_fetcher.crawl_websites(
             ids, self.request_interval
         )
+        
+        # 爬取RSS订阅源数据
+        try:
+            from rss_module.rss_feed import fetch_all_rss_feeds, load_rss_config
+            
+            # 加载RSS配置
+            rss_feeds_config = load_rss_config(CONFIG)
+            if rss_feeds_config:
+                print(f"配置的RSS订阅源: {[feed.get('name', feed.get('url', 'Unknown')) for feed in rss_feeds_config]}")
+                
+                # 获取RSS数据
+                proxy_url = CONFIG["DEFAULT_PROXY"] if CONFIG["USE_PROXY"] else None
+                rss_results, rss_id_to_name, rss_failed_ids = fetch_all_rss_feeds(rss_feeds_config, proxy_url)
+                
+                # 合并RSS数据到原有结果中
+                results.update(rss_results)
+                id_to_name.update(rss_id_to_name)
+                failed_ids.extend(rss_failed_ids)
+        except Exception as e:
+            print(f"RSS订阅源爬取失败: {e}")
 
         title_file = save_titles_to_file(results, id_to_name, failed_ids)
         print(f"标题已保存到: {title_file}")
